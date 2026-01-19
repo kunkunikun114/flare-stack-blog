@@ -1,5 +1,5 @@
 import { NodeViewWrapper } from "@tiptap/react";
-import { Loader2, UploadCloud } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import type { NodeViewProps } from "@tiptap/react";
 
@@ -12,50 +12,49 @@ export function ImageBlock({
   const isUploading = useMemo(() => src?.startsWith("blob:"), [src]);
 
   return (
-    <NodeViewWrapper className="my-16 group relative image-node-view">
+    <NodeViewWrapper className="my-12 relative image-node-view">
       <div
         className={`
-            relative overflow-hidden transition-all duration-700 rounded-sm border
+            relative overflow-hidden transition-all duration-200 border-2
             ${
               selected
-                ? "border-foreground shadow-2xl scale-[1.01]"
-                : "border-border hover:border-border"
+                ? "border-foreground"
+                : "border-transparent hover:border-border/50"
             }
-            ${isUploading ? "border-dashed opacity-50" : ""}
         `}
       >
-        <div className="relative">
+        <div className="relative bg-muted/20">
           <img
             src={src}
             alt={node.attrs.alt}
-            className={`w-full h-auto object-cover max-h-[800px] transition-all duration-1000 ${
-              isUploading ? "blur-sm grayscale" : "opacity-100"
-            } ${selected ? "scale-105" : "group-hover:scale-102"}`}
+            className={`w-full h-auto max-h-[80vh] object-contain mx-auto ${
+              isUploading ? "opacity-50 grayscale" : "opacity-100"
+            }`}
           />
 
-          {/* Uploading Overlay */}
+          {/* Uploading Status */}
           {isUploading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-              <div className="bg-popover/80 backdrop-blur-xl p-6 rounded-sm flex flex-col items-center gap-4 shadow-2xl border border-border">
-                <Loader2 className="animate-spin" size={24} />
-                <div className="text-[10px] font-bold uppercase tracking-[0.3em] flex items-center gap-3">
-                  <UploadCloud size={14} /> Processing Asset
-                </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="bg-background/90 border border-border px-4 py-2 flex items-center gap-3">
+                <Loader2 className="animate-spin" size={14} />
+                <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                  上传中...
+                </span>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-4">
-        <div className="h-px bg-border flex-1"></div>
+      {/* Caption / Alt Text */}
+      <div className="mt-3 flex items-center justify-center">
         <input
           type="text"
           value={node.attrs.alt || ""}
           onChange={(e) => updateAttributes({ alt: e.target.value })}
-          placeholder={isUploading ? "Processing..." : "Describe this image..."}
+          placeholder={isUploading ? "..." : "图片说明..."}
           disabled={isUploading}
-          className="bg-transparent text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground focus:text-foreground focus:outline-none w-48 md:w-64 placeholder:text-muted-foreground text-right transition-colors disabled:opacity-50"
+          className="bg-transparent text-center text-[11px] font-mono text-muted-foreground focus:text-foreground focus:outline-none w-full max-w-md placeholder:text-muted-foreground/30 transition-colors disabled:opacity-50"
         />
       </div>
     </NodeViewWrapper>
