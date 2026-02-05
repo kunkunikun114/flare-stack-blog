@@ -7,7 +7,7 @@
     "build": "bun scripts/generate-manifest.ts && vite build",
     "deploy": "bun db:migrate && wrangler deploy",
     "serve": "vite preview",
-    "test": "vitest run --pool workers --pool-options.workerOptions.remote=false",
+    "test": "vitest run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
