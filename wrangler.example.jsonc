@@ -9,7 +9,7 @@
   },
   "routes": [
     {
-      "pattern": "DOMAIN_PLACEHOLDER",
+      "pattern": "7891.tech",
       "custom_domain": true,
     },
   ],
