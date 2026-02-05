@@ -5,75 +5,75 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "./src/server.ts",
   "observability": {
-    "enabled": true
+    "enabled": true,
   },
   "routes": [
     {
       "pattern": "7891.tech",
-      "custom_domain": true
-    }
+      "custom_domain": true,
+    },
   ],
   "d1_databases": [
     {
       "binding": "DB",
       "database_id": "be1836e6-fe30-4f16-b131-a5465b1542cb",
       "migrations_dir": "migrations",
-      "remote": true
-    }
+      "remote": true,
+    },
   ],
   "r2_buckets": [
     {
       "bucket_name": "cmsblog",
       "binding": "R2",
-      "remote": true
-    }
+      "remote": true,
+    },
   ],
   "kv_namespaces": [
     {
       "binding": "KV",
       "id": "71392cf2eb564459ac4e3324096baa60",
-      "remote": true
-    }
+      "remote": true,
+    },
   ],
   "workflows": [
     {
       "name": "post-process-workflow",
       "binding": "POST_PROCESS_WORKFLOW",
-      "class_name": "PostProcessWorkflow"
+      "class_name": "PostProcessWorkflow",
     },
     {
       "name": "comment-moderation-workflow",
       "binding": "COMMENT_MODERATION_WORKFLOW",
-      "class_name": "CommentModerationWorkflow"
+      "class_name": "CommentModerationWorkflow",
     },
     {
       "name": "send-email-workflow",
       "binding": "SEND_EMAIL_WORKFLOW",
-      "class_name": "SendEmailWorkflow"
+      "class_name": "SendEmailWorkflow",
     },
     {
       "name": "scheduled-publish-workflow",
       "binding": "SCHEDULED_PUBLISH_WORKFLOW",
-      "class_name": "ScheduledPublishWorkflow"
-    }
+      "class_name": "ScheduledPublishWorkflow",
+    },
   ],
   "durable_objects": {
     "bindings": [
       {
         "name": "RATE_LIMITER",
-        "class_name": "RateLimiter"
-      }
-    ]
+        "class_name": "RateLimiter",
+      },
+    ],
   },
   "ai": {
     "binding": "AI",
-    "remote": true
+    "remote": true,
   },
   "migrations": [
     {
       "tag": "rate-limiter-v1",
-      "new_sqlite_classes": ["RateLimiter"]
-    }
+      "new_sqlite_classes": ["RateLimiter"],
+    },
   ],
   "env": {
     "test": {
@@ -81,54 +81,47 @@
         "bindings": [
           {
             "name": "RATE_LIMITER",
-            "class_name": "RateLimiter"
-          }
-        ]
+            "class_name": "RateLimiter",
+          },
+        ],
       },
       "kv_namespaces": [
         {
           "binding": "KV",
-          "id": "71392cf2eb564459ac4e3324096baa60", // 补充：复用生产KV ID（无测试KV时）
-          "remote": true
-        }
+        },
       ],
       "r2_buckets": [
         {
           "binding": "R2",
-          "bucket_name": "cmsblog", // 补充：测试环境R2桶名（需先创建该桶）
-          "remote": true
-        }
+        },
       ],
       "d1_databases": [
         {
           "binding": "DB",
-          "database_id": "be1836e6-fe30-4f16-b131-a5465b1542cb", // 补充：复用生产D1 ID（无测试库时）
-          "migrations_dir": "migrations", // 补充：迁移目录（和生产一致）
-          "remote": true
-        }
+        },
       ],
       "workflows": [
         {
           "name": "post-process-workflow",
           "binding": "POST_PROCESS_WORKFLOW",
-          "class_name": "PostProcessWorkflow"
+          "class_name": "PostProcessWorkflow",
         },
         {
           "name": "comment-moderation-workflow",
           "binding": "COMMENT_MODERATION_WORKFLOW",
-          "class_name": "CommentModerationWorkflow"
+          "class_name": "CommentModerationWorkflow",
         },
         {
           "name": "send-email-workflow",
           "binding": "SEND_EMAIL_WORKFLOW",
-          "class_name": "SendEmailWorkflow"
+          "class_name": "SendEmailWorkflow",
         },
         {
           "name": "scheduled-publish-workflow",
           "binding": "SCHEDULED_PUBLISH_WORKFLOW",
-          "class_name": "ScheduledPublishWorkflow"
-        }
-      ]
-    }
-  }
+          "class_name": "ScheduledPublishWorkflow",
+        },
+      ],
+    },
+  },
 }
