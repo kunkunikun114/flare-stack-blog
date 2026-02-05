@@ -120,10 +120,11 @@ jobs:
       - name: Inject Resource IDs
         run: |
           cp wrangler.example.jsonc wrangler.jsonc
-          sed -i "s/D1_DATABASE_ID/$D1_DATABASE_ID/g" wrangler.jsonc
-          sed -i "s/KV_NAMESPACE_ID/$KV_NAMESPACE_ID/g" wrangler.jsonc
-          sed -i "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" wrangler.jsonc
-          sed -i "s/bucket-name-placeholder/$BUCKET_NAME/g" wrangler.jsonc
+          # 关键修改：将 sed 分隔符从 / 换成 #，解决特殊字符冲突
+          sed -i "s#D1_DATABASE_ID#$D1_DATABASE_ID#g" wrangler.jsonc
+          sed -i "s#KV_NAMESPACE_ID#$KV_NAMESPACE_ID#g" wrangler.jsonc
+          sed -i "s#DOMAIN_PLACEHOLDER#$DOMAIN#g" wrangler.jsonc
+          sed -i "s#bucket-name-placeholder#$BUCKET_NAME#g" wrangler.jsonc
 
       - name: Generate Secrets JSON
         run: |
