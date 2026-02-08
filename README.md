@@ -1,5 +1,7 @@
 # Flare Stack Blog
 
+> 更新后部署失败？请查看 [CHANGELOG](./CHANGELOG.md) 了解 Breaking Changes。
+
 > **注意**：本项目专为 Cloudflare Workers 生态设计，深度集成 D1、R2、KV、Workflows 等服务，**仅支持部署在 Cloudflare Workers**。
 
 [部署指南](#部署指南) | [本地开发](#本地开发)
@@ -15,6 +17,7 @@
 - **文章管理** — 富文本编辑器，支持代码高亮、图片上传、草稿/发布流程
 - **标签系统** — 灵活的文章分类
 - **评论系统** — 支持嵌套回复、邮件通知、审核机制
+- **友情链接** — 用户申请、管理员审核、邮件通知
 - **全文搜索** — 基于 Orama 的高性能搜索
 - **媒体库** — R2 对象存储，图片管理与优化
 - **用户认证** — GitHub OAuth 登录，权限控制
@@ -25,16 +28,17 @@
 
 ### Cloudflare 生态
 
-| 服务            | 用途                         |
-| :-------------- | :--------------------------- |
-| Workers         | 边缘计算与托管               |
-| D1              | SQLite 数据库                |
-| R2              | 对象存储（媒体文件）         |
-| KV              | 缓存层                       |
-| Durable Objects | 分布式限流                   |
-| Workflows       | 异步任务（邮件、内容审核等） |
-| Workers AI      | AI 能力                      |
-| Images          | 图片优化                     |
+| 服务            | 用途                           |
+| :-------------- | :----------------------------- |
+| Workers         | 边缘计算与托管                 |
+| D1              | SQLite 数据库                  |
+| R2              | 对象存储（媒体文件）           |
+| KV              | 缓存层                         |
+| Durable Objects | 分布式限流                     |
+| Workflows       | 异步任务（内容审核、定时发布） |
+| Queues          | 消息队列（邮件通知）           |
+| Workers AI      | AI 能力                        |
+| Images          | 图片优化                       |
 
 ### 前端
 
@@ -76,6 +80,7 @@ src/
 │   ├── email/       # 邮件通知（Resend）
 │   ├── cache/       # KV 缓存服务
 │   ├── config/      # 博客配置
+│   ├── friend-links/# 友情链接（申请、审核）
 │   └── ai/          # Workers AI 集成
 ├── routes/
 │   ├── _public/     # 公开页面（首页、文章列表/详情、搜索）
@@ -129,6 +134,7 @@ src/
    - R2 存储桶（记录名称）
    - D1 数据库（记录 Database ID）
    - KV 命名空间（记录 Namespace ID）
+   - Queue 队列：`blog-queue`
 3. **域名托管** — 将域名 DNS 托管到 Cloudflare 以使用免费 CDN
 4. **获取 Cloudflare 凭证**：
    - Dashboard 中获取 Zone ID 和 Account ID

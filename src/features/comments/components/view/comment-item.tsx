@@ -54,8 +54,10 @@ export const CommentItem = memo(
       <div
         id={`comment-${comment.id}`}
         className={cn(
-          "group flex gap-5 py-8 scroll-mt-32 transition-colors duration-500",
-          isReply ? "ml-8 pl-8" : "border-b border-border/10",
+          "group flex gap-3 md:gap-5 py-6 md:py-8 scroll-mt-32 transition-colors duration-500",
+          isReply
+            ? "ml-3 pl-3 border-l border-border/10 md:ml-8 md:pl-8 md:border-l-0"
+            : "border-b border-border/10",
           isHighlighted && "bg-muted/5 -mx-4 px-4 rounded-sm",
           className,
         )}
@@ -71,7 +73,7 @@ export const CommentItem = memo(
               <img
                 src={comment.user.image}
                 alt={comment.user.name}
-                className="w-full h-full object-cover grayscale opacity-80"
+                className="w-full h-full object-cover"
               />
             ) : (
               <span className="text-[10px] font-mono text-muted-foreground uppercase">
@@ -83,22 +85,22 @@ export const CommentItem = memo(
 
         {/* Main Content */}
         <div className="flex-1 min-w-0 space-y-2">
-          <div className="flex items-baseline justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+            <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-foreground tracking-wide">
                 {comment.status === "deleted"
-                  ? "Deleted"
-                  : comment.user?.name || "Anonymous"}
+                  ? "已删除"
+                  : comment.user?.name || "匿名用户"}
               </span>
               {isBlogger && comment.status !== "deleted" && (
                 <span className="text-[9px] font-mono text-foreground/40 uppercase tracking-widest border border-border/30 px-1 rounded-[1px]">
-                  OP
+                  博主
                 </span>
               )}
 
               {isReply && replyToName && (
                 <span className="text-[10px] text-muted-foreground/50 font-mono">
-                  回复 @{comment.status === "deleted" ? "unknown" : replyToName}
+                  回复 @{comment.status === "deleted" ? "未知" : replyToName}
                 </span>
               )}
             </div>
@@ -116,7 +118,7 @@ export const CommentItem = memo(
                 size="sm"
                 onClick={() => {
                   const rootId = comment.rootId ?? comment.id;
-                  onReply?.(rootId, comment.id, comment.user?.name || "User");
+                  onReply?.(rootId, comment.id, comment.user?.name || "用户");
                 }}
                 className="h-auto p-0 text-[9px] uppercase tracking-widest font-bold text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent"
               >

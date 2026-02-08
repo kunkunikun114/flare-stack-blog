@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { blogConfig } from "@/blog.config";
 
 interface EmailLayoutProps {
   children: ReactNode;
@@ -52,7 +53,7 @@ export const EmailLayout = ({ children, previewText }: EmailLayoutProps) => {
                   letterSpacing: "-0.01em",
                 }}
               >
-                Flare Stack
+                {blogConfig.title}
               </h2>
             </header>
 
@@ -75,8 +76,7 @@ export const EmailLayout = ({ children, previewText }: EmailLayoutProps) => {
                   textTransform: "uppercase",
                 }}
               >
-                &copy; {new Date().getFullYear()} Flare Stack. Minimalist Blog
-                System.
+                &copy; {new Date().getFullYear()} {blogConfig.title}.
               </p>
             </footer>
           </td>

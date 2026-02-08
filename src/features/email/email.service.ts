@@ -37,6 +37,7 @@ export async function sendEmail(
     subject: string;
     html: string;
     headers?: Record<string, string>;
+    idempotencyKey?: string;
   },
 ) {
   if (isNotInProduction(context.env)) {
@@ -56,15 +57,20 @@ export async function sendEmail(
 
   const resend = createEmailClient({ apiKey: email.apiKey });
 
-  const result = await resend.emails.send({
-    from: email.senderName
-      ? `${email.senderName} <${email.senderAddress}>`
-      : email.senderAddress,
-    to: options.to,
-    subject: options.subject,
-    html: options.html,
-    headers: options.headers,
-  });
+  const result = await resend.emails.send(
+    {
+      from: email.senderName
+        ? `${email.senderName} <${email.senderAddress}>`
+        : email.senderAddress,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      headers: options.headers,
+    },
+    {
+      idempotencyKey: options.idempotencyKey,
+    },
+  );
 
   if (result.error) {
     return { status: "FAILED" as const, error: result.error.message };

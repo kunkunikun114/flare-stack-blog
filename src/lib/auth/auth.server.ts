@@ -2,8 +2,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth/minimal";
 import { AuthEmail } from "@/features/email/templates/AuthEmail";
+import { hashPassword, verifyPassword } from "@/lib/auth/auth.helpers";
 import { authConfig } from "@/lib/auth/auth.config";
-import * as authSchema from "@/lib/db/schema/auth.schema";
+import * as authSchema from "@/lib/db/schema/auth.table";
 import { serverEnv } from "@/lib/env/server.env";
 
 let auth: Auth | null = null;
@@ -35,13 +36,18 @@ function createAuth({ db, env }: { db: DB; env: Env }) {
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
+      password: {
+        hash: hashPassword,
+        verify: verifyPassword,
+      },
       sendResetPassword: async ({ user, url }) => {
         const emailHtml = renderToStaticMarkup(
           AuthEmail({ type: "reset-password", url }),
         );
 
-        await env.SEND_EMAIL_WORKFLOW.create({
-          params: {
+        await env.QUEUE.send({
+          type: "EMAIL",
+          data: {
             to: user.email,
             subject: "重置密码",
             html: emailHtml,
@@ -55,8 +61,9 @@ function createAuth({ db, env }: { db: DB; env: Env }) {
           AuthEmail({ type: "verification", url }),
         );
 
-        await env.SEND_EMAIL_WORKFLOW.create({
-          params: {
+        await env.QUEUE.send({
+          type: "EMAIL",
+          data: {
             to: user.email,
             subject: "验证您的邮箱",
             html: emailHtml,

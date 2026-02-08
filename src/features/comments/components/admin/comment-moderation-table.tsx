@@ -170,17 +170,17 @@ export const CommentModerationTable = ({
           />
         </div>
         <div className="col-span-2 text-[9px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
-          AUTHOR
+          作者
         </div>
         <div className="col-span-1"></div>
         <div className="col-span-5 text-[9px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
-          CONTENT / CONTEXT
+          内容 / 上下文
         </div>
         <div className="col-span-1 text-[9px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
-          STATUS
+          状态
         </div>
         <div className="col-span-2 text-right text-[9px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
-          ACTIONS
+          操作
         </div>
       </div>
 
@@ -218,7 +218,7 @@ export const CommentModerationTable = ({
                       {comment.user?.image ? (
                         <img
                           src={comment.user.image}
-                          className="w-full h-full object-cover grayscale group-hover/user:grayscale-0 transition-all"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <span className="text-[10px] font-mono">
@@ -310,7 +310,7 @@ export const CommentModerationTable = ({
                     className="rounded-none border-border"
                   />
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-none bg-muted flex items-center justify-center border border-border shrink-0 grayscale">
+                    <div className="w-8 h-8 rounded-none bg-muted flex items-center justify-center border border-border shrink-0">
                       {comment.user?.image ? (
                         <img
                           src={comment.user.image}
