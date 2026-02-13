@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import * as AuthService from "@/features/auth/auth.service";
 import {
   authMiddleware,
-  createRateLimitMiddleware,
+  dbMiddleware,
   sessionMiddleware,
 } from "@/lib/middlewares";
 
@@ -15,11 +15,5 @@ export const userHasPasswordFn = createServerFn()
   .handler(({ context }) => AuthService.userHasPassword(context));
 
 export const getIsEmailConfiguredFn = createServerFn()
-  .middleware([
-    createRateLimitMiddleware({
-      capacity: 60,
-      interval: "1m",
-      key: "auth:getIsEmailConfigured",
-    }),
-  ])
+  .middleware([dbMiddleware])
   .handler(({ context }) => AuthService.getIsEmailConfigured(context));

@@ -110,12 +110,14 @@ jobs:
           echo "UMAMI_USERNAME=${{ secrets.UMAMI_USERNAME }}" >> $GITHUB_ENV
           echo "UMAMI_PASSWORD=${{ secrets.UMAMI_PASSWORD }}" >> $GITHUB_ENV
           echo "VITE_UMAMI_WEBSITE_ID=${{ vars.VITE_UMAMI_WEBSITE_ID }}" >> $GITHUB_ENV
+          echo "VITE_TURNSTILE_SITE_KEY=${{ vars.VITE_TURNSTILE_SITE_KEY }}" >> $GITHUB_ENV
           echo "VITE_BLOG_TITLE=${{ vars.VITE_BLOG_TITLE }}" >> $GITHUB_ENV
           echo "VITE_BLOG_NAME=${{ vars.VITE_BLOG_NAME }}" >> $GITHUB_ENV
           echo "VITE_BLOG_AUTHOR=${{ vars.VITE_BLOG_AUTHOR }}" >> $GITHUB_ENV
           echo "VITE_BLOG_DESCRIPTION=${{ vars.VITE_BLOG_DESCRIPTION }}" >> $GITHUB_ENV
           echo "VITE_BLOG_GITHUB=${{ vars.VITE_BLOG_GITHUB }}" >> $GITHUB_ENV
           echo "VITE_BLOG_EMAIL=${{ vars.VITE_BLOG_EMAIL }}" >> $GITHUB_ENV
+          echo "TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }}" >> $GITHUB_ENV
 
       - name: Inject Resource IDs
         run: |
@@ -141,7 +143,8 @@ jobs:
             "UMAMI_SRC": "$UMAMI_SRC",
             "UMAMI_API_KEY": "$UMAMI_API_KEY",
             "UMAMI_USERNAME": "$UMAMI_USERNAME",
-            "UMAMI_PASSWORD": "$UMAMI_PASSWORD"
+            "UMAMI_PASSWORD": "$UMAMI_PASSWORD",
+            "TURNSTILE_SECRET_KEY": "$TURNSTILE_SECRET_KEY"
           }
           EOF
 

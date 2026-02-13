@@ -23,7 +23,11 @@ export const moderateCommentFn = createServerFn({
   .middleware([adminMiddleware])
   .inputValidator(ModerateCommentInputSchema)
   .handler(async ({ data, context }) => {
-    return await CommentService.moderateComment(context, data);
+    return await CommentService.moderateComment(
+      context,
+      data,
+      context.session.user.id,
+    );
   });
 
 // Admin API - Hard delete a comment

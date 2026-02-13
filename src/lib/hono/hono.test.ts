@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { testRequest } from "tests/test-utils";
+
 import { app } from "@/lib/hono";
+
+vi.mock("@/lib/turnstile", () => ({
+  verifyTurnstileToken: vi.fn(() => Promise.resolve({ success: true })),
+}));
 
 describe("Hono Integration Test", () => {
   beforeEach(() => {
@@ -16,12 +21,13 @@ describe("Hono Integration Test", () => {
       method: "POST",
       headers: {
         "cf-connecting-ip": "bad-ip",
+        "X-Turnstile-Token": "test-token",
       },
     };
 
     const url = "/api/auth/sign-in/email";
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 5; i++) {
       const res = await testRequest(app, url, reqInit);
       expect(res.status).not.toBe(429);
     }

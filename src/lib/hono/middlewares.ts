@@ -6,6 +6,7 @@ import { serverEnv } from "@/lib/env/server.env";
 import { getDb } from "@/lib/db";
 import { getAuth } from "@/lib/auth/auth.server";
 import { CACHE_CONTROL } from "@/lib/constants";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 declare module "hono" {
   interface ContextVariableMap {
@@ -144,3 +145,24 @@ export const shieldMiddleware = createMiddleware(async (c, next) => {
   });
   return response;
 });
+
+/* ======================= Turnstile ====================== */
+export const turnstileMiddleware = createMiddleware<{ Bindings: Env }>(
+  async (c, next) => {
+    const secretKey = serverEnv(c.env).TURNSTILE_SECRET_KEY;
+    if (!secretKey) return next(); // 未配置则跳过验证
+
+    const token = c.req.header("X-Turnstile-Token");
+    if (!token) {
+      return c.json({ message: "Missing Turnstile token" }, 400);
+    }
+
+    const result = await verifyTurnstileToken({ secretKey, token });
+
+    if (!result.success) {
+      return c.json({ message: "Turnstile verification failed" }, 403);
+    }
+
+    return next();
+  },
+);

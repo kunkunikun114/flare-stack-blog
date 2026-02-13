@@ -4,7 +4,7 @@ import {
   UpsertSearchDocSchema,
 } from "@/features/search/search.schema";
 import * as SearchService from "@/features/search/search.service";
-import { adminMiddleware, createRateLimitMiddleware } from "@/lib/middlewares";
+import { adminMiddleware, dbMiddleware } from "@/lib/middlewares";
 
 export const buildSearchIndexFn = createServerFn()
   .middleware([adminMiddleware])
@@ -21,11 +21,5 @@ export const deleteSearchDocFn = createServerFn({ method: "POST" })
   .handler(({ data, context }) => SearchService.deleteIndex(context, data));
 
 export const getIndexVersionFn = createServerFn()
-  .middleware([
-    createRateLimitMiddleware({
-      capacity: 30,
-      interval: "1m",
-      key: "search:getIndexVersion",
-    }),
-  ])
+  .middleware([dbMiddleware])
   .handler(({ context }) => SearchService.getIndexVersion(context));

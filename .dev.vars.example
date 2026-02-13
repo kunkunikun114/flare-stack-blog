@@ -33,3 +33,7 @@ UMAMI_API_KEY=your-cloud-api-key
 # UMAMI_SRC=https://umami.example.com
 # UMAMI_USERNAME=your-username
 # UMAMI_PASSWORD=your-password
+
+# --- Turnstile 人机验证 ---
+# 测试key见：https://developers.cloudflare.com/turnstile/troubleshooting/testing/
+# TURNSTILE_SECRET_KEY=your-turnstile-secret-key

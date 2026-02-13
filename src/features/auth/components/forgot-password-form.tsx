@@ -6,10 +6,11 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
+import { Turnstile, useTurnstile } from "@/components/common/turnstile";
 import { authClient } from "@/lib/auth/auth.client";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("无效的邮箱格式"),
+  email: z.email("无效的邮箱格式"),
 });
 
 type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
@@ -18,6 +19,13 @@ export function ForgotPasswordForm() {
   const navigate = useNavigate();
   const [isSent, setIsSent] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
+
+  const {
+    isPending: turnstilePending,
+    token: turnstileToken,
+    reset: resetTurnstile,
+    turnstileProps,
+  } = useTurnstile("forgot-password");
 
   const {
     register,
@@ -31,10 +39,19 @@ export function ForgotPasswordForm() {
     const { error } = await authClient.requestPasswordReset({
       email: data.email,
       redirectTo: `${window.location.origin}/reset-link`,
+      fetchOptions: {
+        headers: { "X-Turnstile-Token": turnstileToken || "" },
+      },
     });
 
+    resetTurnstile();
+
     if (error) {
-      toast.error("重置邮件发送失败");
+      if (error.message?.includes("Turnstile")) {
+        toast.error("人机验证失败", { description: "请等待验证完成后重试" });
+      } else {
+        toast.error("重置邮件发送失败", { description: error.message });
+      }
       return;
     }
 
@@ -98,7 +115,7 @@ export function ForgotPasswordForm() {
       <div className="space-y-4">
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || turnstilePending}
           className="w-full py-4 bg-foreground text-background text-[10px] font-mono uppercase tracking-[0.3em] hover:opacity-80 transition-all disabled:opacity-30 flex items-center justify-center gap-3"
         >
           {isSubmitting ? (
@@ -115,6 +132,10 @@ export function ForgotPasswordForm() {
         >
           [ ← 返回登录 ]
         </button>
+
+        <div className="flex justify-center">
+          <Turnstile {...turnstileProps} />
+        </div>
       </div>
     </form>
   );

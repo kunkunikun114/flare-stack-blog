@@ -269,6 +269,7 @@ export async function getAllComments(
 export async function moderateComment(
   context: DbContext,
   data: ModerateCommentInput,
+  moderatorUserId?: string,
 ) {
   const comment = await CommentRepo.findCommentById(context.db, data.id);
 
@@ -300,6 +301,7 @@ export async function moderateComment(
           content: comment.content,
         },
         post: { slug: post.slug, title: post.title },
+        skipNotifyUserId: moderatorUserId,
       });
     }
   }

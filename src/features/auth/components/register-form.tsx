@@ -7,14 +7,15 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
+import { Turnstile, useTurnstile } from "@/components/common/turnstile";
 import { usePreviousLocation } from "@/hooks/use-previous-location";
 import { authClient } from "@/lib/auth/auth.client";
 import { AUTH_KEYS } from "@/features/auth/queries";
 
 const registerSchema = z
   .object({
-    name: z.string().min(2, "昵称至少 2 位"),
-    email: z.string().email("无效的邮箱格式"),
+    name: z.string().min(2, "昵称至少 2 位").max(20, "昵称最多 20 位"),
+    email: z.email("无效的邮箱格式"),
     password: z.string().min(8, "密码至少 8 位"),
     confirmPassword: z.string(),
   })
@@ -31,6 +32,12 @@ export function RegisterForm() {
   const [isSuccess, setIsSuccess] = React.useState(false);
   const previousLocation = usePreviousLocation();
   const queryClient = useQueryClient();
+  const {
+    isPending: turnstilePending,
+    token: turnstileToken,
+    reset: resetTurnstile,
+    turnstileProps,
+  } = useTurnstile("register");
 
   const {
     register,
@@ -46,12 +53,21 @@ export function RegisterForm() {
       password: data.password,
       name: data.name,
       callbackURL: `${window.location.origin}/verify-email`,
+      fetchOptions: {
+        headers: { "X-Turnstile-Token": turnstileToken || "" },
+      },
     });
 
+    resetTurnstile();
+
     if (error) {
-      toast.error("注册失败", {
-        description: error.message || "服务器连接异常，请稍后重试。",
-      });
+      if (error.message?.includes("Turnstile")) {
+        toast.error("人机验证失败", { description: "请等待验证完成后重试" });
+      } else {
+        toast.error("注册失败", {
+          description: error.message || "服务器连接异常，请稍后重试。",
+        });
+      }
       return;
     }
 
@@ -172,7 +188,7 @@ export function RegisterForm() {
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || turnstilePending}
         className="w-full py-4 bg-foreground text-background text-[10px] font-mono uppercase tracking-[0.3em] hover:opacity-80 transition-all disabled:opacity-30 flex items-center justify-center gap-3"
       >
         {isSubmitting ? (
@@ -181,6 +197,10 @@ export function RegisterForm() {
           <span>创建账户</span>
         )}
       </button>
+
+      <div className="flex justify-center">
+        <Turnstile {...turnstileProps} />
+      </div>
     </form>
   );
 }

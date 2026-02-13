@@ -11,18 +11,17 @@ import {
   GetRepliesByRootIdInputSchema,
 } from "@/features/comments/comments.schema";
 import * as CommentService from "@/features/comments/comments.service";
-import { authMiddleware, createRateLimitMiddleware } from "@/lib/middlewares";
+import {
+  authMiddleware,
+  createRateLimitMiddleware,
+  sessionMiddleware,
+  turnstileMiddleware,
+} from "@/lib/middlewares";
 import { CACHE_CONTROL } from "@/lib/constants";
 
 // Public API - Get root comments by post ID (published + viewer's pending)
 export const getRootCommentsByPostIdFn = createServerFn()
-  .middleware([
-    createRateLimitMiddleware({
-      capacity: 60,
-      interval: "1m",
-      key: "comments:getRootsByPostId",
-    }),
-  ])
+  .middleware([sessionMiddleware])
   .inputValidator(GetCommentsByPostIdInputSchema)
   .handler(async ({ data, context }) => {
     const session = await context.auth.api.getSession({
@@ -50,13 +49,7 @@ export const getRootCommentsByPostIdFn = createServerFn()
 
 // Public API - Get replies by root ID (published + viewer's pending)
 export const getRepliesByRootIdFn = createServerFn()
-  .middleware([
-    createRateLimitMiddleware({
-      capacity: 60,
-      interval: "1m",
-      key: "comments:getRepliesByRootId",
-    }),
-  ])
+  .middleware([sessionMiddleware])
   .inputValidator(GetRepliesByRootIdInputSchema)
   .handler(async ({ data, context }) => {
     const session = await context.auth.api.getSession({
@@ -92,6 +85,7 @@ export const createCommentFn = createServerFn({
       interval: "1m",
       key: "comments:create",
     }),
+    turnstileMiddleware,
     authMiddleware,
   ])
   .inputValidator(CreateCommentInputSchema)
@@ -116,14 +110,7 @@ export const deleteCommentFn = createServerFn({
   });
 
 export const getMyCommentsFn = createServerFn()
-  .middleware([
-    createRateLimitMiddleware({
-      capacity: 60,
-      interval: "1m",
-      key: "comments:getMine",
-    }),
-    authMiddleware,
-  ])
+  .middleware([authMiddleware])
   .inputValidator(GetMyCommentsInputSchema)
   .handler(async ({ data, context }) => {
     return await CommentService.getMyComments(context, data);

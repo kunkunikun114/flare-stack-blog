@@ -12,13 +12,25 @@ import { authClient } from "@/lib/auth/auth.client";
 import { AUTH_KEYS } from "@/features/auth/queries";
 
 const loginSchema = z.object({
-  email: z.string().email("无效的邮箱格式"),
+  email: z.email("无效的邮箱格式"),
   password: z.string().min(1, "请输入密码"),
 });
 
 type LoginSchema = z.infer<typeof loginSchema>;
 
-export function LoginForm({ redirectTo }: { redirectTo?: string }) {
+interface LoginFormProps {
+  redirectTo?: string;
+  turnstileToken?: string | null;
+  turnstilePending?: boolean;
+  resetTurnstile?: () => void;
+}
+
+export function LoginForm({
+  redirectTo,
+  turnstileToken = null,
+  turnstilePending = false,
+  resetTurnstile,
+}: LoginFormProps) {
   const [loginStep, setLoginStep] = useState<"IDLE" | "VERIFYING" | "SUCCESS">(
     "IDLE",
   );
@@ -48,16 +60,35 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
     const { error } = await authClient.signIn.email({
       email: data.email,
       password: data.password,
+      fetchOptions: {
+        headers: { "X-Turnstile-Token": turnstileToken || "" },
+      },
     });
+
+    // Reset Turnstile immediately — tokens are single-use
+    resetTurnstile?.();
 
     if (error) {
       setLoginStep("IDLE");
-      if (error.status === 403) {
-        setError("root", { message: "邮箱尚未验证" });
-        setIsUnverifiedEmail(true);
-      } else {
-        setError("root", { message: "无效的账号或密码" });
+
+      // Map error codes to user-friendly messages
+      switch (error.code as keyof typeof authClient.$ERROR_CODES | undefined) {
+        case "EMAIL_NOT_VERIFIED":
+          setError("root", { message: "邮箱尚未验证" });
+          setIsUnverifiedEmail(true);
+          break;
+        case "INVALID_EMAIL_OR_PASSWORD":
+          setError("root", { message: "无效的账号或密码" });
+          break;
+        default:
+          // Fallback: check message for Turnstile errors or use generic message
+          if (error.message?.includes("Turnstile")) {
+            setError("root", { message: "人机验证失败，请等待验证完成后重试" });
+          } else {
+            setError("root", { message: error.message || "登录失败" });
+          }
       }
+
       toast.error("登录失败", { description: error.message });
       return;
     }
@@ -71,19 +102,36 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
     }, 800);
   };
 
-  const handleResendVerification = () => {
+  const handleResendVerification = async () => {
     if (!emailValue) return;
-    toast.promise(
-      authClient.sendVerificationEmail({
-        email: emailValue,
-        callbackURL: `${window.location.origin}/verify-email`,
-      }),
-      {
-        loading: "正在发送验证邮件...",
-        success: "验证邮件已发送",
-        error: "发送失败，请稍后重试",
+    if (turnstilePending) {
+      toast.error("请等待人机验证完成");
+      return;
+    }
+
+    const loadingToast = toast.loading("正在发送验证邮件...");
+
+    const { error } = await authClient.sendVerificationEmail({
+      email: emailValue,
+      callbackURL: `${window.location.origin}/verify-email`,
+      fetchOptions: {
+        headers: { "X-Turnstile-Token": turnstileToken || "" },
       },
-    );
+    });
+
+    resetTurnstile?.();
+    toast.dismiss(loadingToast);
+
+    if (error) {
+      if (error.message?.includes("Turnstile")) {
+        toast.error("人机验证失败", { description: "请等待验证完成后重试" });
+      } else {
+        toast.error("发送失败，请稍后重试", { description: error.message });
+      }
+      return;
+    }
+
+    toast.success("验证邮件已发送", { description: "请检查您的收件箱" });
   };
 
   return (
@@ -158,7 +206,7 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 
       <button
         type="submit"
-        disabled={isSubmitting || loginStep !== "IDLE"}
+        disabled={isSubmitting || loginStep !== "IDLE" || turnstilePending}
         className="w-full py-4 bg-foreground text-background text-[10px] font-mono uppercase tracking-[0.3em] hover:opacity-80 transition-all disabled:opacity-30 flex items-center justify-center gap-3"
       >
         {loginStep === "VERIFYING" ? (

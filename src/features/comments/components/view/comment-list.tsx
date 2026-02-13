@@ -162,7 +162,7 @@ function RootCommentWithReplies({
           ) : (
             <div className="flex items-center gap-4 py-4 bg-muted/5 rounded-sm px-4">
               <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex-1">
-                Login to reply @{replyTarget.userName}
+                登录以回复 @{replyTarget.userName}
               </span>
               <Link to="/login">
                 <Button
@@ -170,14 +170,14 @@ function RootCommentWithReplies({
                   size="sm"
                   className="h-7 px-3 text-[9px] uppercase tracking-widest font-bold border-border/40 hover:bg-foreground hover:text-background transition-all"
                 >
-                  Login
+                  登录
                 </Button>
               </Link>
               <button
                 onClick={onCancelReply}
                 className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground/50 hover:text-foreground transition-colors"
               >
-                Cancel
+                取消
               </button>
             </div>
           )}
@@ -238,7 +238,7 @@ function RootCommentWithReplies({
                         ) : (
                           <div className="flex items-center gap-4 py-4 bg-muted/5 rounded-sm px-4">
                             <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex-1">
-                              Login to reply @{replyTarget.userName}
+                              登录以回复 @{replyTarget.userName}
                             </span>
                             <Link to="/login">
                               <Button
@@ -246,14 +246,14 @@ function RootCommentWithReplies({
                                 size="sm"
                                 className="h-7 px-3 text-[9px] uppercase tracking-widest font-bold border-border/40 hover:bg-foreground hover:text-background transition-all"
                               >
-                                Login
+                                登录
                               </Button>
                             </Link>
                             <button
                               onClick={onCancelReply}
                               className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground/50 hover:text-foreground transition-colors"
                             >
-                              Cancel
+                              取消
                             </button>
                           </div>
                         )}

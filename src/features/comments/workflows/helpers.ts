@@ -20,6 +20,7 @@ interface SendReplyNotificationParams {
     slug: string;
     title: string;
   };
+  skipNotifyUserId?: string;
 }
 
 export async function sendReplyNotification(
@@ -47,6 +48,14 @@ export async function sendReplyNotification(
   // Don't notify if replying to own comment
   if (replyToAuthor.id === comment.userId) {
     console.log(`[sendReplyNotification] Self-reply, skipping notification`);
+    return;
+  }
+
+  // Don't notify if the moderator is the reply-to author (they already read the comment)
+  if (params.skipNotifyUserId && replyToAuthor.id === params.skipNotifyUserId) {
+    console.log(
+      `[sendReplyNotification] Moderator is the reply-to author, skipping notification`,
+    );
     return;
   }
 

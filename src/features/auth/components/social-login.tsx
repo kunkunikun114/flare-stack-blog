@@ -4,13 +4,21 @@ import { toast } from "sonner";
 import { usePreviousLocation } from "@/hooks/use-previous-location";
 import { authClient } from "@/lib/auth/auth.client";
 
+interface SocialLoginProps {
+  redirectTo?: string;
+  showDivider?: boolean;
+  turnstileToken?: string | null;
+  turnstilePending?: boolean;
+  resetTurnstile?: () => void;
+}
+
 export function SocialLogin({
   redirectTo,
   showDivider = true,
-}: {
-  redirectTo?: string;
-  showDivider?: boolean;
-}) {
+  turnstileToken = null,
+  turnstilePending = false,
+  resetTurnstile,
+}: SocialLoginProps) {
   const [isLoading, setIsLoading] = useState(false);
   const previousLocation = usePreviousLocation();
 
@@ -23,12 +31,19 @@ export function SocialLogin({
       provider: "github",
       errorCallbackURL: `${window.location.origin}/login`,
       callbackURL: `${window.location.origin}${redirectTo ?? previousLocation}`,
+      fetchOptions: {
+        headers: { "X-Turnstile-Token": turnstileToken || "" },
+      },
     });
 
+    resetTurnstile?.();
+
     if (error) {
-      toast.error("第三方登录失败", {
-        description: error.message,
-      });
+      if (error.message?.includes("Turnstile")) {
+        toast.error("人机验证失败", { description: "请等待验证完成后重试" });
+      } else {
+        toast.error("第三方登录失败", { description: error.message });
+      }
       setIsLoading(false);
       return;
     }
@@ -51,14 +66,14 @@ export function SocialLogin({
       <button
         type="button"
         onClick={handleGithubLogin}
-        disabled={isLoading}
-        className={`group w-full py-4 border border-border/30 flex items-center justify-center gap-3 transition-all hover:border-foreground disabled:opacity-50 disabled:cursor-not-allowed ${
+        disabled={isLoading || turnstilePending}
+        className={`group w-full py-4 border border-border/40 flex items-center justify-center gap-3 transition-all hover:border-foreground disabled:opacity-50 disabled:cursor-not-allowed ${
           !showDivider
             ? "bg-foreground text-background border-transparent hover:opacity-80"
             : ""
         }`}
       >
-        {isLoading ? (
+        {isLoading || turnstilePending ? (
           <Loader2
             size={14}
             className={`${showDivider ? "text-muted-foreground" : "text-background"} animate-spin`}
@@ -68,7 +83,11 @@ export function SocialLogin({
         )}
 
         <span className="text-[10px] font-mono uppercase tracking-widest">
-          {isLoading ? "正在连接..." : "GitHub 登录"}
+          {isLoading
+            ? "正在连接..."
+            : turnstilePending
+              ? "验证中..."
+              : "GitHub 登录"}
         </span>
       </button>
       {!showDivider && (

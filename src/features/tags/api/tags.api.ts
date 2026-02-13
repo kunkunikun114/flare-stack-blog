@@ -10,18 +10,12 @@ import {
 } from "@/features/tags/tags.schema";
 import * as TagService from "@/features/tags/tags.service";
 import * as AIService from "@/features/ai/ai.service";
-import { adminMiddleware, createRateLimitMiddleware } from "@/lib/middlewares";
+import { adminMiddleware, dbMiddleware } from "@/lib/middlewares";
 
 // ============ Public API ============
 
 export const getTagsFn = createServerFn()
-  .middleware([
-    createRateLimitMiddleware({
-      capacity: 60,
-      interval: "1m",
-      key: "tags:getAll",
-    }),
-  ])
+  .middleware([dbMiddleware])
   .handler(async ({ context }) => {
     return await TagService.getPublicTags(context);
   });

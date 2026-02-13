@@ -1,28 +1,16 @@
 import { Hono } from "hono";
-import { baseMiddleware, rateLimitMiddleware } from "@/lib/hono/middlewares";
-import {
-  createRateLimiterIdentifier,
-  getServiceContext,
-  setCacheHeaders,
-} from "@/lib/hono/helper";
+import { baseMiddleware } from "@/lib/hono/middlewares";
+import { getServiceContext, setCacheHeaders } from "@/lib/hono/helper";
 import * as TagService from "@/features/tags/tags.service";
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", baseMiddleware);
 
-const route = app.get(
-  "/",
-  rateLimitMiddleware({
-    capacity: 60,
-    interval: "1m",
-    identifier: createRateLimiterIdentifier,
-  }),
-  async (c) => {
-    const result = await TagService.getPublicTags(getServiceContext(c));
-    setCacheHeaders(c.res.headers, "public");
-    return c.json(result);
-  },
-);
+const route = app.get("/", async (c) => {
+  const result = await TagService.getPublicTags(getServiceContext(c));
+  setCacheHeaders(c.res.headers, "public");
+  return c.json(result);
+});
 
 export default route;

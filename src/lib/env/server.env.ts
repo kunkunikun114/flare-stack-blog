@@ -20,6 +20,7 @@ const serverEnvSchema = z.object({
   UMAMI_API_KEY: z.string().optional(),
   UMAMI_USERNAME: z.string().optional(),
   UMAMI_PASSWORD: z.string().optional(),
+  TURNSTILE_SECRET_KEY: z.string().optional(),
 });
 
 export function serverEnv(env: Env) {

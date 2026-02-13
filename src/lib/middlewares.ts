@@ -8,6 +8,8 @@ import type { RateLimitOptions } from "@/lib/do/rate-limiter";
 import { CACHE_CONTROL } from "@/lib/constants";
 import { getDb } from "@/lib/db";
 import { getAuth } from "@/lib/auth/auth.server";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { serverEnv } from "@/lib/env/server.env";
 
 // ======================= Cache Control ====================== */
 // deprecated 感觉没啥用了，现在都是hono api来获取公开博客数据了，hono那里设置好缓存头就行了
@@ -71,7 +73,7 @@ export const authMiddleware = createMiddleware({ type: "function" })
     const session = context.session;
 
     if (!session) {
-      throw Response.json({ message: "UNAUTHENTICATED" }, { status: 401 });
+      throw new Error("UNAUTHENTICATED");
     }
 
     return next({
@@ -87,7 +89,7 @@ export const adminMiddleware = createMiddleware({ type: "function" })
     const session = context.session;
 
     if (session.user.role !== "admin") {
-      throw Response.json({ message: "PERMISSION_DENIED" }, { status: 403 });
+      throw new Error("PERMISSION_DENIED");
     }
 
     return next({
@@ -107,7 +109,7 @@ export const createRateLimitMiddleware = (
       const session = context.session;
 
       const identifier =
-        session?.user.id || getRequestHeader("cf-connecting-ip") || "unknown";
+        getRequestHeader("cf-connecting-ip") || session?.user.id || "unknown";
       const scope = options.key || "default";
       const uniqueIdentifier = `${identifier}:${scope}`;
 
@@ -117,15 +119,41 @@ export const createRateLimitMiddleware = (
       const result = await rateLimiter.checkLimit(options);
 
       if (!result.allowed) {
-        throw Response.json(
-          {
-            message: "Too Many Requests",
-            retryAfterSeconds: result.retryAfterMs / 1000,
-          },
-          { status: 429 },
+        throw new Error(
+          `请求过于频繁，请 ${Math.ceil(result.retryAfterMs / 1000)} 秒后重试`,
         );
       }
 
       return next();
     });
 };
+
+/* ======================= Turnstile ====================== */
+export const turnstileMiddleware = createMiddleware({ type: "function" })
+  .client(async ({ next }) => {
+    // Dynamically import to avoid SSR issues
+    const { getTurnstileToken } = await import("@/components/common/turnstile");
+    const token = getTurnstileToken();
+    return next({
+      headers: {
+        "X-Turnstile-Token": token || "",
+      },
+    });
+  })
+  .server(async ({ next, context }) => {
+    const secretKey = serverEnv(context.env).TURNSTILE_SECRET_KEY;
+    if (!secretKey) return next(); // 未配置则跳过验证
+
+    const token = getRequestHeader("X-Turnstile-Token");
+    if (!token) {
+      throw new Error("Missing Turnstile token");
+    }
+
+    const result = await verifyTurnstileToken({ secretKey, token });
+
+    if (!result.success) {
+      throw new Error("人机验证失败，请刷新页面重试");
+    }
+
+    return next();
+  });
