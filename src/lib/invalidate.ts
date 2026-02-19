@@ -10,7 +10,9 @@ export async function purgeCDNCache(env: Env, options: PurgeOptions) {
     serverEnv(env);
 
   if (isNotInProduction(env)) {
-    console.log("Skipping CDN cache purge in development environment");
+    console.log(
+      JSON.stringify({ message: "cdn cache purge skipped in development" }),
+    );
     return;
   }
 
@@ -53,7 +55,13 @@ export async function purgeCDNCache(env: Env, options: PurgeOptions) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("Cloudflare Purge API failed:", response.status, errorText);
+    console.error(
+      JSON.stringify({
+        message: "cloudflare purge api failed",
+        status: response.status,
+        error: errorText,
+      }),
+    );
     throw new Error(`Cloudflare Purge API failed: ${errorText}`);
   }
 }

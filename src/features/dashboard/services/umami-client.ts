@@ -67,24 +67,29 @@ export class UmamiClient {
       // Warn if username/password also set
       if (config.username || config.password) {
         console.warn(
-          "[Umami] Cloud mode detected (UMAMI_API_KEY set). " +
-            "UMAMI_USERNAME and UMAMI_PASSWORD will be ignored.",
+          JSON.stringify({
+            message:
+              "umami cloud mode detected, username and password will be ignored",
+          }),
         );
       }
 
       // Warn if UMAMI_SRC doesn't look like Cloud
       if (config.src && !config.src.includes("umami.is")) {
         console.warn(
-          `[Umami] Cloud mode detected but UMAMI_SRC is "${config.src}". ` +
-            "Expected https://cloud.umami.is for Umami Cloud.",
+          JSON.stringify({
+            message: "umami cloud mode but src is not umami.is",
+            src: config.src,
+          }),
         );
       }
     } else {
       // Warn if Cloud URL used without API key
       if (config.src && config.src.includes("cloud.umami.is")) {
         console.warn(
-          "[Umami] UMAMI_SRC points to cloud.umami.is but no UMAMI_API_KEY found. " +
-            "Umami Cloud requires an API key.",
+          JSON.stringify({
+            message: "umami src points to cloud but no api key found",
+          }),
         );
       }
     }
@@ -141,7 +146,12 @@ export class UmamiClient {
       }
       return null;
     } catch (error) {
-      console.error("Umami login failed:", error);
+      console.error(
+        JSON.stringify({
+          message: "umami login failed",
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      );
       return null;
     }
   }
@@ -196,10 +206,13 @@ export class UmamiClient {
       }
 
       if (!res.ok) {
-        const modeLabel = this.isCloud ? "Umami Cloud" : "Umami";
         console.error(
-          `${modeLabel} API error: ${res.status} ${res.statusText}` +
-            (this.isCloud ? " - Verify UMAMI_API_KEY is valid" : ""),
+          JSON.stringify({
+            message: "umami api error",
+            status: res.status,
+            statusText: res.statusText,
+            isCloud: this.isCloud,
+          }),
         );
         return null;
       }
@@ -208,13 +221,23 @@ export class UmamiClient {
       const parsed = schema.safeParse(data);
 
       if (!parsed.success) {
-        console.error("Umami API schema validation failed:", parsed.error);
+        console.error(
+          JSON.stringify({
+            message: "umami api schema validation failed",
+            error: parsed.error.message,
+          }),
+        );
         return null;
       }
 
       return parsed.data;
     } catch (error) {
-      console.error("Umami client error:", error);
+      console.error(
+        JSON.stringify({
+          message: "umami client error",
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      );
       return null;
     }
   }

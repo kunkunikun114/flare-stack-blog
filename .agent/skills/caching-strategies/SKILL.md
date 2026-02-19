@@ -9,54 +9,49 @@ The project employs a dual-layer caching architecture: CDN (HTTP headers) and KV
 
 ## CDN Layer (HTTP Headers)
 
-Control browser and CDN caching via response headers set by middlewares.
+Control browser and CDN caching via response headers. Set headers through page routes or Hono routes.
 
-### Setting Cache Headers
+### Setting Cache Headers in Page Routes
 
-Use `createCacheHeaderMiddleware(strategy)` in Server Functions to set `Cache-Control` headers:
+For TanStack Start routes, set headers in the `headers` function:
 
 ```typescript
-import { createServerFn } from "@tanstack/react-start";
-import {
-  createCacheHeaderMiddleware,
-  createRateLimitMiddleware,
-} from "@/lib/middlewares";
-
-export const getPostsFn = createServerFn()
-  .middleware([
-    createRateLimitMiddleware({
-      capacity: 60,
-      interval: "1m",
-      key: "posts:list",
-    }),
-    createCacheHeaderMiddleware("swr"), // Sets SWR Cache-Control headers
-  ])
-  .handler(({ context }) => PostService.getPosts(context));
+// routes/sitemap[.]xml.ts
+export const Route = createFileRoute("/sitemap.xml")({
+  headers: () => ({
+    "Cache-Control": "public, max-age=3600, s-maxage=3600",
+  }),
+});
 ```
-
-### Cache Header Strategies
-
-| Strategy      | Header                 | Use Case             |
-| :------------ | :--------------------- | :------------------- |
-| `"swr"`       | Stale-While-Revalidate | Public API responses |
-| `"immutable"` | Long-term immutable    | Hashed static assets |
-| `"private"`   | no-store, private      | Auth/admin responses |
 
 ### Cache Control Constants (`lib/constants.ts`)
 
-These constants are used by the middleware factory. Additional constants for error pages:
+Predefined constants for common scenarios:
 
-| Constant                    | Use Case  |
-| :-------------------------- | :-------- |
-| `CACHE_CONTROL.notFound`    | 404 pages |
-| `CACHE_CONTROL.serverError` | 500 pages |
+| Constant                    | Browser Cache         | CDN Cache                           | Use Case      |
+| :-------------------------- | :-------------------- | :---------------------------------- | :------------ |
+| `CACHE_CONTROL.immutable`   | max-age=31536000      | s-maxage=31536000                   | Static assets |
+| `CACHE_CONTROL.swr`         | must-revalidate       | s-maxage=1, stale-while-revalidate  | General pages |
+| `CACHE_CONTROL.standard`    | must-revalidate       | s-maxage=3600                       | List pages    |
+| `CACHE_CONTROL.private`     | no-store, no-cache    | private, no-store                   | Admin pages   |
+| `CACHE_CONTROL.notFound`    | must-revalidate       | s-maxage=10                         | 404 pages     |
+| `CACHE_CONTROL.serverError` | must-revalidate       | s-maxage=10                         | 500 pages     |
+
+### Hono Route Caching
+
+Hono API routes use middleware for cache headers:
+
+```typescript
+// lib/hono/middlewares.ts
+app.use("/api/*", cacheMiddleware());
+```
 
 ### Invalidation
 
 Purge CDN cache using the Cloudflare API:
 
 ```typescript
-await purgePostCDNCache(context, post.slug);
+await purgePostCDNCache(context.env, post.slug);
 ```
 
 ## KV Layer (Cloudflare KV)

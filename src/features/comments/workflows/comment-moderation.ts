@@ -29,14 +29,23 @@ export class CommentModerationWorkflow extends WorkflowEntrypoint<Env, Params> {
     });
 
     if (!comment) {
-      console.log(`Comment ${commentId} not found, skipping moderation`);
+      console.log(
+        JSON.stringify({
+          message: "comment not found, skipping moderation",
+          commentId,
+        }),
+      );
       return;
     }
 
     // Skip if comment is already processed or deleted
     if (comment.status !== "verifying") {
       console.log(
-        `Comment ${commentId} is already processed (status: ${comment.status}), skipping`,
+        JSON.stringify({
+          message: "comment already processed, skipping moderation",
+          commentId,
+          status: comment.status,
+        }),
       );
       return;
     }
@@ -50,7 +59,12 @@ export class CommentModerationWorkflow extends WorkflowEntrypoint<Env, Params> {
     });
 
     if (!post) {
-      console.log(`Post ${comment.postId} not found, skipping moderation`);
+      console.log(
+        JSON.stringify({
+          message: "post not found, skipping moderation",
+          postId: comment.postId,
+        }),
+      );
       return;
     }
 
@@ -101,7 +115,13 @@ export class CommentModerationWorkflow extends WorkflowEntrypoint<Env, Params> {
           );
         } catch (error) {
           // If AI service is not configured, mark as pending for manual review
-          console.error("AI moderation failed:", error);
+          console.error(
+            JSON.stringify({
+              message: "ai moderation failed",
+              commentId,
+              error: error instanceof Error ? error.message : String(error),
+            }),
+          );
           return {
             safe: false,
             reason: "AI 审核服务暂时不可用，等待人工审核",

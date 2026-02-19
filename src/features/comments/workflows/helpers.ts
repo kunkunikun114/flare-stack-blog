@@ -40,21 +40,28 @@ export async function sendReplyNotification(
 
   if (!replyToAuthor || !replyToAuthor.email) {
     console.log(
-      `[sendReplyNotification] Reply-to author not found or no email, skipping notification`,
+      JSON.stringify({
+        message: "reply notification skipped, author not found or no email",
+        replyToCommentId: comment.replyToCommentId,
+      }),
     );
     return;
   }
 
   // Don't notify if replying to own comment
   if (replyToAuthor.id === comment.userId) {
-    console.log(`[sendReplyNotification] Self-reply, skipping notification`);
+    console.log(
+      JSON.stringify({ message: "reply notification skipped, self-reply" }),
+    );
     return;
   }
 
   // Don't notify if the moderator is the reply-to author (they already read the comment)
   if (params.skipNotifyUserId && replyToAuthor.id === params.skipNotifyUserId) {
     console.log(
-      `[sendReplyNotification] Moderator is the reply-to author, skipping notification`,
+      JSON.stringify({
+        message: "reply notification skipped, moderator is reply-to author",
+      }),
     );
     return;
   }
@@ -68,7 +75,10 @@ export async function sendReplyNotification(
 
   if (unsubscribed) {
     console.log(
-      `[sendReplyNotification] User ${replyToAuthor.id} unsubscribed from reply notifications, skipping`,
+      JSON.stringify({
+        message: "reply notification skipped, user unsubscribed",
+        userId: replyToAuthor.id,
+      }),
     );
     return;
   }
@@ -116,12 +126,19 @@ export async function sendReplyNotification(
     });
 
     console.log(
-      `[sendReplyNotification] Reply notification queued for ${replyToAuthor.email}`,
+      JSON.stringify({
+        message: "reply notification queued",
+        to: replyToAuthor.email,
+        commentId: comment.id,
+      }),
     );
   } catch (error) {
     console.error(
-      `[sendReplyNotification] Failed to queue reply notification for comment ${comment.id}:`,
-      error,
+      JSON.stringify({
+        message: "reply notification queue failed",
+        commentId: comment.id,
+        error: error instanceof Error ? error.message : String(error),
+      }),
     );
   }
 }

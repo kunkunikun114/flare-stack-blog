@@ -30,9 +30,23 @@ export async function upload(
     });
     return mediaRecord;
   } catch (error) {
-    console.error("DB Insert Failed, rolling back R2 upload:", error);
+    console.error(
+      JSON.stringify({
+        message: "media db insert failed, rolling back r2 upload",
+        key: uploaded.key,
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    );
     context.executionCtx.waitUntil(
-      Storage.deleteFromR2(context.env, uploaded.key).catch(console.error),
+      Storage.deleteFromR2(context.env, uploaded.key).catch((err) =>
+        console.error(
+          JSON.stringify({
+            message: "r2 rollback delete failed",
+            key: uploaded.key,
+            error: err instanceof Error ? err.message : String(err),
+          }),
+        ),
+      ),
     );
     throw new Error("Failed to insert media record");
   }
@@ -50,7 +64,15 @@ export async function deleteImage(
 
   await MediaRepo.deleteMedia(context.db, key);
   context.executionCtx.waitUntil(
-    Storage.deleteFromR2(context.env, key).catch(console.error),
+    Storage.deleteFromR2(context.env, key).catch((err) =>
+      console.error(
+        JSON.stringify({
+          message: "r2 delete failed",
+          key,
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      ),
+    ),
   );
 }
 
@@ -155,7 +177,12 @@ export async function handleImageRequest(
     // 如果变换失败 (如格式不支持)，降级回原图
     if (!response.ok) {
       console.error(
-        `Image transform failed with status ${response.status}: ${response.statusText}`,
+        JSON.stringify({
+          message: "image transform failed",
+          key,
+          status: response.status,
+          statusText: response.statusText,
+        }),
       );
       return await serveOriginal();
     }
@@ -172,7 +199,13 @@ export async function handleImageRequest(
 
     return newResponse;
   } catch (e) {
-    console.error("Image transform failed with error:", e);
+    console.error(
+      JSON.stringify({
+        message: "image transform error",
+        key,
+        error: e instanceof Error ? e.message : String(e),
+      }),
+    );
     return await serveOriginal();
   }
 }

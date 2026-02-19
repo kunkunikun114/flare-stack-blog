@@ -37,3 +37,8 @@ UMAMI_API_KEY=your-cloud-api-key
 # --- Turnstile 人机验证 ---
 # 测试key见：https://developers.cloudflare.com/turnstile/troubleshooting/testing/
 # TURNSTILE_SECRET_KEY=your-turnstile-secret-key
+
+# --- GitHub API（可选，用于版本更新检查） ---
+# 未认证请求限流 60 次/小时/IP，Cloudflare Workers 共享 IP 容易触发限流
+# 创建无权限的 Fine-grained token: https://github.com/settings/personal-access-tokens
+# GITHUB_TOKEN=your-github-token

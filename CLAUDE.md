@@ -11,13 +11,16 @@ A full-stack blog CMS running on **Cloudflare Workers**. Built with TanStack Sta
 ```bash
 bun dev              # Dev server on port 3000
 bun run build        # Production build (generates manifest + vite build)
-bun run test         # Run tests (Vitest with Cloudflare Workers pool) — NOT npx vitest
+bun run test         # Run all tests (Vitest with Cloudflare Workers pool) — NOT npx vitest
+bun run test posts   # Run tests matching pattern
+bun run test src/features/posts/posts.service.test.ts  # Run specific test file
 bun lint             # ESLint check
 bun lint:fix         # ESLint fix + formatting
 bun check            # Type check + lint + format (tsc --noEmit && lint:fix && format)
 bun run deploy       # Migrate D1 + wrangler deploy
-bun db:generate      # Generate Drizzle migrations
-bun db:migrate       # Apply migrations to remote D1
+bun db:generate      # Generate Drizzle migrations (DO NOT USE unless user requests)
+bun db:migrate       # Apply migrations to remote D1 (DO NOT USE unless user requests)
+bun db:push          # Push schema directly to D1 (no migration file, DO NOT USE)
 bun db:studio        # Drizzle Studio (visual DB browser)
 ```
 
@@ -93,6 +96,7 @@ TanStack Router filesystem routes. Layout groups: `_public/` (blog pages), `_aut
 - **Storage**: Cloudflare R2 for media files, served via `/images/:key` Hono route.
 - **Search**: Orama in-memory full-text search, persisted to KV.
 - **Rate Limiting**: Cloudflare Durable Objects with token bucket algorithm (`src/lib/rate-limiter.ts`).
+- **Queues**: Cloudflare Queues for async message processing (email notifications). Handler in `server.ts`.
 - **Auth**: Better Auth with GitHub OAuth. Admin role checked via `ADMIN_EMAIL` env var.
 - **Email**: Resend integration (optional).
 - **AI**: Cloudflare Workers AI via `workers-ai-provider`.
@@ -105,3 +109,30 @@ Server-side (Wrangler-injected, validated in `src/lib/env/server.env.ts`): auth 
 ### Testing
 
 Tests run in Cloudflare Workers pool via `@cloudflare/vitest-pool-workers`. Config in `vitest.config.ts` applies D1 migrations and provides mock bindings. Test helpers and mocks live in `tests/`.
+
+### Structured Logging
+
+Use JSON format for logs to enable search/filtering in Cloudflare Workers Observability:
+
+```typescript
+// ✅ Good
+console.log(JSON.stringify({ message: "cache hit", key }));
+console.error(
+  JSON.stringify({ message: "request failed", error: String(error) }),
+);
+
+// 🔴 Bad
+console.log(`[Cache] HIT: ${key}`);
+console.error("Request failed:", error);
+```
+
+Use structured logging for request entry/exit, errors, and important business events. Development debug logs can remain as-is.
+
+## Additional Resources
+
+Detailed development guides live in `.agent/skills/`:
+
+- `backend-development/` — Server Functions, schemas, middlewares, workflows
+- `frontend-development/` — TanStack Query patterns, route loaders, components
+- `caching-strategies/` — KV caching, CDN headers, invalidation patterns
+- `testing-guide/` — Test utilities and patterns

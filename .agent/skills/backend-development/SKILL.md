@@ -32,7 +32,7 @@ export const PostRepo = {
   - `DbContext` for database-only operations
   - `DbContext & { executionCtx: ExecutionContext }` for operations with background tasks
   - `AuthContext` for authenticated operations
-- **Caching**: This is the ONLY layer that calls `CacheService.get()` and `CacheService.bumpVersion()`.
+- **Caching**: This is the ONLY layer that calls `CacheService.get()` and `CacheService.bumpVersion()`. See `caching-strategies` skill for detailed patterns.
 
 ```typescript
 // posts.service.ts
@@ -62,39 +62,27 @@ export async function createEmptyPost(context: DbContext) {
 
 ```typescript
 import { createServerFn } from "@tanstack/react-start";
-import {
-  adminMiddleware,
-  createCacheHeaderMiddleware,
-  createRateLimitMiddleware,
-} from "@/lib/middlewares";
+import { adminMiddleware, dbMiddleware, createRateLimitMiddleware } from "@/lib/middlewares";
 
-// Public endpoint with caching
-export const getPostsFn = createServerFn()
+// Public endpoint with rate limiting
+export const createCommentFn = createServerFn()
   .middleware([
-    createRateLimitMiddleware({
-      capacity: 60,
-      interval: "1m",
-      key: "posts:list",
-    }),
-    createCacheHeaderMiddleware("swr"), // Sets Cache-Control headers
+    createRateLimitMiddleware({ capacity: 10, interval: "1m", key: "comments:create" }),
   ])
-  .inputValidator(GetPostsInputSchema)
-  .handler(({ data, context }) => PostService.getPosts(context, data));
+  .handler(({ data, context }) => CommentService.createComment(context, data));
 
-// Admin endpoint (private cache + auth required)
+// Public endpoint (database only)
+export const getPostsFn = createServerFn()
+  .middleware([dbMiddleware])
+  .handler(({ context }) => PostService.getPosts(context));
+
+// Admin endpoint (auth + admin role required)
 export const updatePostFn = createServerFn()
-  .middleware([adminMiddleware]) // Includes dbMiddleware + sessionMiddleware + auth check + private cache
-  .inputValidator(UpdatePostInputSchema)
+  .middleware([adminMiddleware]) // Includes dbMiddleware + sessionMiddleware + auth check + admin check
   .handler(({ data, context }) => PostService.updatePost(context, data));
 ```
 
-#### Cache Header Strategies
-
-| Strategy      | Header                 | Use Case             |
-| :------------ | :--------------------- | :------------------- |
-| `"private"`   | no-store, private      | Auth/admin responses |
-| `"immutable"` | Long-term immutable    | Hashed static assets |
-| `"swr"`       | Stale-while-revalidate | General caching      |
+> For CDN caching patterns (Cache-Control headers via page or Hono routes), see the **caching-strategies** skill.
 
 ## Schema Definitions (`[name].schema.ts`)
 
@@ -134,6 +122,8 @@ export const POSTS_CACHE_KEYS = {
 } as const;
 ```
 
+> For complete caching patterns including versioned invalidation and CDN integration, see the **caching-strategies** skill.
+
 ## TanStack Middlewares (`lib/middlewares.ts`)
 
 Middlewares progressively inject dependencies and enforce policies.
@@ -147,12 +137,11 @@ Middlewares progressively inject dependencies and enforce policies.
 
 ### Policy Middlewares
 
-| Middleware                              | Purpose                                 | Depends On          |
-| :-------------------------------------- | :-------------------------------------- | :------------------ |
-| `authMiddleware`                        | Requires valid session (401 if missing) | `sessionMiddleware` |
-| `adminMiddleware`                       | Requires admin role (403 if not admin)  | `authMiddleware`    |
-| `createCacheHeaderMiddleware(strategy)` | Sets Cache-Control headers              | (none)              |
-| `createRateLimitMiddleware(options)`    | Calls Durable Object for rate limiting  | `sessionMiddleware` |
+| Middleware                        | Purpose                                 | Depends On          |
+| :-------------------------------- | :-------------------------------------- | :------------------ |
+| `authMiddleware`                  | Requires valid session (401 if missing) | `sessionMiddleware` |
+| `adminMiddleware`                 | Requires admin role (403 if not admin)  | `authMiddleware`    |
+| `createRateLimitMiddleware(opts)` | Rate limiting via Durable Object        | (none)              |
 
 ### Middleware Chain Example
 
@@ -221,6 +210,22 @@ const domain = env.DOMAIN;
 
 - `.dev.vars`: Local development (not committed)
 - Cloudflare Dashboard / Wrangler Secrets: Production
+
+## Structured Logging
+
+Use JSON format for logs to enable search/filtering in Workers Observability:
+
+```typescript
+// ✅ Good
+console.log(JSON.stringify({ message: "cache hit", key: serializedKey }));
+console.error(JSON.stringify({ message: "image transform failed", key, error: String(error) }));
+
+// 🔴 Bad
+console.log(`[Cache] HIT: ${serializedKey}`);
+console.error("Image transform failed:", error);
+```
+
+Use structured logging for request entry/exit, errors, and important business events. Development debug logs can remain as-is.
 
 ## Code Quality Checks
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 describe("PasswordHasher", () => {
   function getHasher() {
-    const id = env.PASSWORD_HASHER.idFromName("test");
+    const id = env.PASSWORD_HASHER.idFromName("hasher-0");
     return env.PASSWORD_HASHER.get(id);
   }
 

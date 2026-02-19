@@ -64,7 +64,12 @@ async function loadFromKv(env: Env): Promise<MyOramaDB | null> {
     await load(db, raw);
     return db;
   } catch (error) {
-    console.error("Failed to load Orama index from KV", error);
+    console.error(
+      JSON.stringify({
+        message: "orama index load failed",
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    );
     return null;
   }
 }

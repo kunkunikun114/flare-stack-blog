@@ -41,6 +41,18 @@ All tests should use these helpers. **Never manually construct `any` typed Conte
 | `createMockAdminSession()`          | `Session`     | Creates a mock admin session                      |
 | `seedUser(db, user)`                | `void`        | Insert user into DB (for foreign key constraints) |
 | `waitForBackgroundTasks(ctx)`       | `void`        | Wait for `waitUntil` tasks to complete            |
+| `testRequest(app, path, options?, customEnv?)` | `Response` | Helper for testing Hono routes directly  |
+
+### Mocked Workflows
+
+`createTestContext()` automatically mocks these Cloudflare bindings:
+
+| Binding                         | Mocked Method(s)          | Notes                                    |
+| :------------------------------ | :------------------------ | :--------------------------------------- |
+| `COMMENT_MODERATION_WORKFLOW`   | `create()`                | Returns `{ id: "mock-id" }`              |
+| `POST_PROCESS_WORKFLOW`         | `create()`                | Returns `{ id: "mock-id" }`              |
+| `SCHEDULED_PUBLISH_WORKFLOW`    | `create()`, `get()`       | `get()` returns `{ id, terminate }`      |
+| `QUEUE`                         | `send()`                  | Mocked to resolve immediately            |
 
 ## Writing Tests
 
@@ -85,6 +97,30 @@ it("should cache data", async () => {
   // Assert KV state
   const cached = await context.env.KV.get("key");
   expect(cached).not.toBeNull();
+});
+```
+
+### Testing Hono Routes
+
+Use `testRequest()` helper to test Hono API routes directly without starting a server:
+
+```typescript
+import { testRequest } from "tests/test-utils";
+import app from "@/server";
+
+describe("Hono API", () => {
+  it("should return posts list", async () => {
+    const response = await testRequest(app, "/api/posts");
+    expect(response.status).toBe(200);
+
+    const data = await response.json();
+    expect(data.posts).toBeDefined();
+  });
+
+  it("should return single post", async () => {
+    const response = await testRequest(app, "/api/posts/hello-world");
+    expect(response.status).toBe(200);
+  });
 });
 ```
 

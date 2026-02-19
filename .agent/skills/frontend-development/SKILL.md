@@ -98,16 +98,52 @@ export const Route = createFileRoute("/_public/post/$slug")({
 
 ### 3. Component Data Access
 
-Use `useSuspenseQuery` or `useSuspenseInfiniteQuery` in components. Since loaders prefetch, this is typically synchronous:
+Two patterns for data fetching in components:
+
+#### SSR with Loader (Recommended for page-level data)
+
+When loader uses `ensureQueryData` or `prefetchQuery`, use `useSuspenseQuery` in the component. Data is already cached, so render is synchronous:
 
 ```typescript
-function PostComponent() {
+// Route loader (server-side)
+export const Route = createFileRoute("/_public/post/$slug")({
+  loader: async ({ context, params }) => {
+    const post = await context.queryClient.ensureQueryData(
+      postBySlugQuery(params.slug)
+    );
+    if (!post) throw notFound();
+    return post;
+  },
+  component: PostPage,
+});
+
+// Component (client-side, data already cached)
+function PostPage() {
   const { slug } = Route.useParams();
-  const { data: post } = useSuspenseQuery(postBySlugQuery(slug));
+  const { data: post } = useSuspenseQuery(postBySlugQuery(slug)); // Synchronous!
 
   return <article>{post.content}</article>;
 }
 ```
+
+#### Client-side Only (for secondary/independent data)
+
+Use `useQuery` for data not critical to initial render:
+
+```typescript
+function RelatedPosts({ slug }: { slug: string }) {
+  const { data, isLoading } = useQuery(relatedPostsQuery(slug));
+
+  if (isLoading) return <LoadingSpinner />;
+  return <PostList posts={data} />;
+}
+```
+
+**When to use each:**
+| Pattern | Hook | Use Case |
+|---------|------|----------|
+| SSR with loader | `useSuspenseQuery` | Page primary content, SEO-critical data |
+| Client-side | `useQuery` | Secondary content, user interactions, polling |
 
 ### 4. Infinite Scroll Pattern
 

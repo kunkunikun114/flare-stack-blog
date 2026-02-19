@@ -28,9 +28,11 @@ export default {
       const parsed = queueMessageSchema.safeParse(message.body);
       if (!parsed.success) {
         console.error(
-          "[Queue] 无效消息:",
-          JSON.stringify(message.body),
-          parsed.error.message,
+          JSON.stringify({
+            message: "queue invalid message",
+            body: message.body,
+            error: parsed.error.message,
+          }),
         );
         message.ack();
         continue;
@@ -52,8 +54,11 @@ export default {
         message.ack();
       } catch (error) {
         console.error(
-          `[Queue] 处理失败 (attempt ${message.attempts}):`,
-          error instanceof Error ? error.message : "未知错误",
+          JSON.stringify({
+            message: "queue processing failed",
+            attempt: message.attempts,
+            error: error instanceof Error ? error.message : "unknown error",
+          }),
         );
         message.retry();
       }

@@ -71,7 +71,13 @@ app.get("/images/:key{.+}", async (c) => {
   try {
     return await handleImageRequest(c.env, key, c.req.raw);
   } catch (error) {
-    console.error("Error fetching image from R2:", error);
+    console.error(
+      JSON.stringify({
+        message: "r2 image fetch failed",
+        key,
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    );
     return c.text("Internal server error", 500);
   }
 });
